@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>견적서 & 명세서 생성기</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>인테리어 견적서 & 시공명세서 생성기</h1>
+        </header>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('estimate')">인테리어 견적서</button>
+                <button class="tab-btn" onclick="showTab('daily')">영수증 기록</button>
+                <button class="tab-btn" onclick="showTab('database')">데이터 관리</button>
+            </div>
+
+            <!-- 견적서 섹션 -->
+            <div id="estimate-tab" class="tab-content active">
+                <div class="form-section">
+                    <h2>견적서 정보</h2>
+                    
+                    <!-- 견적서 불러오기 드롭다운 -->
+                    <div class="estimate-load-section">
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1;">
+                                <label>저장된 견적서 불러오기:</label>
+                                <select id="estimate-dropdown" onchange="onEstimateDropdownChange()" style="width: 100%;">
+                                    <option value="">저장된 견적서 선택</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="company-info">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>공급업체 정보</h3>
+                            <div>
+                                <select id="company-dropdown" onchange="onCompanyDropdownChange()" style="margin-right: 10px;">
+                                    <option value="">회사 선택</option>
+                                </select>
+                                <button type="button" onclick="saveCompanyToDB()" class="save-btn">저장</button>
+                                <button type="button" onclick="loadCompanyInfo()" class="load-btn">불러오기</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>상호명:</label>
+                                <input type="text" id="company-name" placeholder="상호명을 입력하세요">
+                            </div>
+                            <div class="form-group">
+                                <label>사업자등록번호:</label>
+                                <input type="text" id="business-number" placeholder="000-00-00000" pattern="[0-9]{3}-[0-9]{2}-[0-9]{5}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>사업장 주소:</label>
+                            <input type="text" id="company-address" placeholder="사업장 주소를 입력하세요">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>대표자명:</label>
+                                <input type="text" id="company-ceo" placeholder="대표자명">
+                            </div>
+                            <div class="form-group">
+                                <label>업태:</label>
+                                <input type="text" id="company-type" placeholder="건설업" value="건설업">
+                            </div>
+                            <div class="form-group">
+                                <label>종목:</label>
+                                <input type="text" id="company-item" placeholder="인테리어" value="인테리어">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>전화번호:</label>
+                                <input type="text" id="company-phone" placeholder="000-0000-0000" pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}">
+                            </div>
+                            <div class="form-group">
+                                <label>팩스번호:</label>
+                                <input type="text" id="company-fax" placeholder="000-0000-0000" pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}">
+                            </div>
+                            <div class="form-group">
+                                <label>담당자:</label>
+                                <input type="text" id="company-manager" placeholder="담당자명">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="client-info">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>공급받는자 정보</h3>
+                            <div>
+                                <select id="client-dropdown" onchange="onClientDropdownChange()" style="margin-right: 10px;">
+                                    <option value="">고객 선택</option>
+                                </select>
+                                <select id="client-type" onchange="toggleClientFields()">
+                                    <option value="business">수요업체</option>
+                                    <option value="individual">단일고객 공사</option>
+                                </select>
+                                <button type="button" onclick="saveClientToDB()" class="save-btn">저장</button>
+                                <button type="button" onclick="loadClientInfo()" class="load-btn">불러오기</button>
+                            </div>
+                        </div>
+                        
+                        <div id="business-client" class="client-fields">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>상호:</label>
+                                    <input type="text" id="client-name" placeholder="상호명을 입력하세요">
+                                </div>
+                                <div class="form-group">
+                                    <label>사업자등록번호:</label>
+                                    <input type="text" id="client-business" placeholder="000-00-00000" pattern="[0-9]{3}-[0-9]{2}-[0-9]{5}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>주소:</label>
+                                <input type="text" id="client-address" placeholder="사업장 주소를 입력하세요">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>대표자명:</label>
+                                    <input type="text" id="client-ceo" placeholder="대표자명">
+                                </div>
+                                <div class="form-group">
+                                    <label>전화번호:</label>
+                                    <input type="text" id="client-contact" placeholder="000-0000-0000" pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}">
+                                </div>
+                                <div class="form-group">
+                                    <label>담당자:</label>
+                                    <input type="text" id="client-manager" placeholder="담당자명">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="individual-client" class="client-fields" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>고객명:</label>
+                                    <input type="text" id="individual-name" placeholder="고객명을 입력하세요">
+                                </div>
+                                <div class="form-group">
+                                    <label>전화번호:</label>
+                                    <input type="text" id="individual-phone" placeholder="000-0000-0000" pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="estimate-details">
+                        <h3>견적 내역</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>견적번호:</label>
+                                <input type="text" id="estimate-number" placeholder="견적번호">
+                            </div>
+                            <div class="form-group">
+                                <label>견적일자:</label>
+                                <input type="date" id="estimate-date" onchange="updateValidUntilDate()">
+                            </div>
+                            <div class="form-group">
+                                <label>견적유효기간:</label>
+                                <input type="date" id="valid-until">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="items-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3>견적 항목</h3>
+                            <div>
+                                <select id="category-filter" onchange="filterByCategory()">
+                                    <option value="">전체 공종</option>
+                                    <option value="철거공사">철거공사</option>
+                                    <option value="목공사">목공사</option>
+                                    <option value="타일공사">타일공사</option>
+                                    <option value="도배공사">도배공사</option>
+                                    <option value="바닥공사">바닥공사</option>
+                                    <option value="전기공사">전기공사</option>
+                                    <option value="설비공사">설비공사</option>
+                                    <option value="도장공사">도장공사</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                                <button type="button" onclick="showItemTemplates()" class="template-btn">템플릿</button>
+                            </div>
+                        </div>
+                        <table id="estimate-items">
+                            <thead>
+                                <tr>
+                                    <th>공종</th>
+                                    <th>시공항목</th>
+                                    <th>규격/단위</th>
+                                    <th>수량</th>
+                                    <th>단가</th>
+                                    <th>금액</th>
+                                    <th>비고</th>
+                                    <th>삭제</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <select class="item-category">
+                                            <option value="철거공사">철거공사</option>
+                                            <option value="목공사">목공사</option>
+                                            <option value="타일공사">타일공사</option>
+                                            <option value="도배공사">도배공사</option>
+                                            <option value="바닥공사">바닥공사</option>
+                                            <option value="전기공사">전기공사</option>
+                                            <option value="설비공사">설비공사</option>
+                                            <option value="도장공사">도장공사</option>
+                                            <option value="기타">기타</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="text" class="item-name" placeholder="시공항목명"></td>
+                                    <td><input type="text" class="item-spec" placeholder="규격/단위"></td>
+                                    <td><input type="number" class="item-quantity" placeholder="수량" min="1" value="1"></td>
+                                    <td><input type="number" class="item-price" placeholder="단가" min="0"></td>
+                                    <td class="item-total">0</td>
+                                    <td><input type="text" class="item-note" placeholder="비고"></td>
+                                    <td><button type="button" class="delete-btn" onclick="deleteRow(this)">삭제</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="button" onclick="addEstimateRow()">항목 추가</button>
+                    </div>
+
+                    <div class="total-section">
+                        <div class="form-group">
+                            <label>공급가액:</label>
+                            <span id="subtotal">0원</span>
+                        </div>
+                        <div class="form-group">
+                            <label>부가가치세(10%):</label>
+                            <span id="tax">0원</span>
+                        </div>
+                        <div class="form-group">
+                            <label>합계금액:</label>
+                            <span id="total">0원</span>
+                        </div>
+                    </div>
+
+                    <div class="payment-info">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>입금계좌 정보</h3>
+                            <div>
+                                <select id="bank-dropdown" onchange="onBankDropdownChange()" style="margin-right: 10px;">
+                                    <option value="">계좌 선택</option>
+                                </select>
+                                <button type="button" onclick="saveBankToDB()" class="save-btn">저장</button>
+                                <button type="button" onclick="loadBankInfo()" class="load-btn">불러오기</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>은행명:</label>
+                                <input type="text" id="bank-name" placeholder="은행명">
+                            </div>
+                            <div class="form-group">
+                                <label>계좌번호:</label>
+                                <input type="text" id="account-number" placeholder="계좌번호" pattern="[0-9-]+">
+                            </div>
+                            <div class="form-group">
+                                <label>예금주:</label>
+                                <input type="text" id="account-holder" placeholder="예금주명">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button onclick="saveEstimateToDB()" class="save-btn">견적서 DB 저장</button>
+                        <button onclick="generateEstimate()">견적서 생성</button>
+                        <button onclick="exportEstimateToExcel()">엑셀 내보내기 (Python)</button>
+                        <button onclick="exportEstimateToPDF()">PDF 내보내기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하루 사용 명세서 섹션 -->
+            <div id="daily-tab" class="tab-content">
+                <div class="form-section">
+                    <h2>일일 영수증 기록 내역서</h2>
+                    
+                    <div class="daily-info">
+                        <div class="form-group">
+                            <label>시공일자:</label>
+                            <input type="date" id="daily-date">
+                        </div>
+                        <div class="form-group">
+                            <label>현장명:</label>
+                            <input type="text" id="site-name" placeholder="현장명을 입력하세요">
+                        </div>
+                    </div>
+
+                    <div class="daily-items-section">
+                        <h3>사용 내역</h3>
+                        <table id="daily-items">
+                            <thead>
+                                <tr>
+                                    <th>카테고리</th>
+                                    <th>사용내역</th>
+                                    <th>단가</th>
+                                    <th>금액</th>
+                                    <th>비고</th>
+                                    <th>삭제</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <select class="daily-category">
+                                            <option value="용역비">용역비</option>
+                                            <option value="기타">기타</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="text" class="daily-content" placeholder="사용내역"></td>
+                                    <td><input type="number" class="daily-rate" placeholder="단가" min="0"></td>
+                                    <td class="daily-amount">0</td>
+                                    <td><input type="text" class="daily-note" placeholder="비고"></td>
+                                    <td><button type="button" class="delete-btn" onclick="deleteDailyRow(this)">삭제</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="button" onclick="addDailyRow()">항목 추가</button>
+                    </div>
+
+                    <div class="daily-total-section">
+                        <div class="form-group">
+                            <label>총 사용비:</label>
+                            <span id="daily-total">0원</span>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button onclick="saveDailyRecordToDB()" class="save-btn">영수증 기록 DB 저장</button>
+                        <button onclick="generateDaily()">영수증 기록 생성</button>
+                        <button onclick="exportDailyToExcel()">엑셀 내보내기 (Python)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 데이터 관리 섹션 -->
+            <div id="database-tab" class="tab-content">
+                <div class="form-section">
+                    <h2>데이터베이스 관리</h2>
+                    
+                    <div class="database-info">
+                        <h3>저장된 데이터 조회</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>데이터 유형:</label>
+                                <select id="data-type-filter">
+                                    <option value="estimates">견적서</option>
+                                    <option value="daily_records">영수증 기록</option>
+                                    <option value="companies">회사 정보</option>
+                                    <option value="clients">고객 정보</option>
+                                </select>
+                            </div>
+                            <button onclick="loadDatabaseRecords()" class="load-btn">조회</button>
+                        </div>
+                        
+                        <div id="database-records">
+                            <!-- 다중 선택 액션 영역 -->
+                            <div id="bulk-actions" class="bulk-actions" style="display: none;">
+                                <div class="selection-info">
+                                    <span id="selection-count">0개 선택됨</span>
+                                </div>
+                                <div>
+                                    <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()">
+                                    <label for="select-all-checkbox" style="margin-left: 5px;">전체 선택/해제</label>
+                                    <button onclick="bulkDeleteRecords()" class="bulk-delete-btn" id="bulk-delete-btn" disabled>
+                                        선택한 항목 삭제
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <table id="records-table" style="display: none;">
+                                <thead>
+                                    <tr id="records-header"></tr>
+                                </thead>
+                                <tbody id="records-body"></tbody>
+                            </table>
+                            
+                            <div id="record-actions" style="display: none; margin-top: 15px;">
+                                <button onclick="loadSelectedRecord()" class="save-btn">선택한 데이터 불러오기</button>
+                                <button onclick="deleteSelectedRecord()" class="delete-btn">선택한 데이터 삭제</button>
+                                <button onclick="clearSelection()" class="load-btn">선택 해제</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="database-actions" style="margin-top: 30px;">
+                        <h3>데이터베이스 관리</h3>
+                        <div class="actions">
+                            <button onclick="exportDatabase()">데이터 내보내기</button>
+                            <button onclick="importDatabase()">데이터 가져오기</button>
+                            <button onclick="clearDatabase()">데이터 초기화</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 미리보기 섹션 -->
+        <div id="preview-section" style="display: none;">
+            <h2>미리보기</h2>
+            <div id="preview-content"></div>
+            <div class="preview-actions">
+                <button onclick="printDocument()">인쇄</button>
+                <button onclick="downloadCurrentAsPDF()">PDF 다운로드</button>
+                <button onclick="closePreview()">닫기</button>
+            </div>
+        </div>
+        
+        <!-- 항목 템플릿 모달 -->
+        <div id="template-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>항목 템플릿</h3>
+                    <button class="close-btn" onclick="closeTemplateModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="template-categories">
+                        <div class="template-category">
+                            <h4>IT/소프트웨어</h4>
+                            <div class="template-items">
+                                <div class="template-item" onclick="addTemplateItem('IT', '웹사이트 개발', 1, 2000000)">웹사이트 개발 - 2,000,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('IT', '모바일 앱 개발', 1, 3000000)">모바일 앱 개발 - 3,000,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('IT', '데이터베이스 구축', 1, 1500000)">데이터베이스 구축 - 1,500,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('IT', 'API 개발', 1, 800000)">API 개발 - 800,000원</div>
+                            </div>
+                        </div>
+                        <div class="template-category">
+                            <h4>디자인</h4>
+                            <div class="template-items">
+                                <div class="template-item" onclick="addTemplateItem('Design', '로고 디자인', 1, 300000)">로고 디자인 - 300,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Design', '브랜드 아이덴티티', 1, 800000)">브랜드 아이덴티티 - 800,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Design', 'UI/UX 디자인', 1, 1200000)">UI/UX 디자인 - 1,200,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Design', '인쇄물 디자인', 1, 200000)">인쇄물 디자인 - 200,000원</div>
+                            </div>
+                        </div>
+                        <div class="template-category">
+                            <h4>마케팅</h4>
+                            <div class="template-items">
+                                <div class="template-item" onclick="addTemplateItem('Marketing', 'SNS 마케팅', 1, 500000)">SNS 마케팅 - 500,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Marketing', '콘텐츠 제작', 1, 300000)">콘텐츠 제작 - 300,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Marketing', '광고 운영', 1, 1000000)">광고 운영 - 1,000,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Marketing', '마케팅 전략 수립', 1, 800000)">마케팅 전략 수립 - 800,000원</div>
+                            </div>
+                        </div>
+                        <div class="template-category">
+                            <h4>컨설팅</h4>
+                            <div class="template-items">
+                                <div class="template-item" onclick="addTemplateItem('Consulting', '경영 컨설팅', 1, 2000000)">경영 컨설팅 - 2,000,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Consulting', 'IT 컨설팅', 1, 1500000)">IT 컨설팅 - 1,500,000원</div>
+                                <div class="template-item" onclick="addTemplateItem('Consulting', '프로세스 개선', 1, 1200000)">프로세스 개선 - 1,200,000원</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

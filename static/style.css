@@ -1,0 +1,818 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background-color: #f0f0f0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
+    border-radius: 10px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #007bff;
+}
+
+header h1 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.tab-container {
+    margin-bottom: 30px;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    background: #34495e;
+    border: none;
+    padding: 15px 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+    color: white;
+    border-radius: 8px 8px 0 0;
+    margin-right: 5px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tab-btn:hover {
+    background-color: #2c3e50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.tab-btn.active {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    box-shadow: inset 0 -3px 0 #e74c3c;
+    transform: translateY(-2px);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.form-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.form-section h2 {
+    color: #007bff;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.form-section h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    margin-top: 25px;
+    font-size: 1.3em;
+}
+
+.company-info, .client-info, .estimate-details, .daily-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-group label {
+    font-weight: bold;
+    min-width: 120px;
+    color: #495057;
+}
+
+.form-group input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 15px;
+}
+
+.form-group span {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 18px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+table th {
+    background: #007bff;
+    color: white;
+    padding: 15px 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+table td {
+    padding: 12px 10px;
+    text-align: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+table input {
+    width: 100%;
+    border: 1px solid #ced4da;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+table input:focus, table select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+table select {
+    width: 100%;
+    border: 1px solid #ced4da;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+    background: white;
+    font-size: 12px;
+}
+
+.item-total {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+}
+
+.items-section button, .daily-items-section button {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.items-section button:hover, .daily-items-section button:hover {
+    background: #218838;
+}
+
+.total-section, .daily-total-section {
+    background: #e9ecef;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.total-section .form-group, .daily-total-section .form-group {
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.actions {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+}
+
+.actions button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    transition: background-color 0.3s;
+}
+
+.actions button:hover {
+    background: #0056b3;
+}
+
+/* 저장/불러오기 버튼 스타일 */
+.save-btn, .load-btn, .template-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.save-btn:hover, .template-btn:hover {
+    background: #218838;
+}
+
+.load-btn {
+    background: #6c757d;
+}
+
+.load-btn:hover {
+    background: #545b62;
+}
+
+/* 카테고리 필터 스타일 */
+#category-filter {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    margin-right: 10px;
+}
+
+#preview-section {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-top: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#preview-content {
+    border: 1px solid #e9ecef;
+    padding: 30px;
+    background: white;
+    min-height: 600px;
+    font-family: 'Malgun Gothic', sans-serif;
+}
+
+.preview-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.preview-actions button {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 10px;
+}
+
+.preview-actions button:first-child {
+    background: #28a745;
+}
+
+.preview-actions button:hover {
+    opacity: 0.8;
+}
+
+/* A4 크기에 맞는 PDF 레이아웃 - 워드 스타일 */
+.estimate-preview, .daily-preview {
+    width: 210mm;
+    min-height: 297mm;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 15mm 15mm 10mm 15mm;
+    background: white;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    page-break-inside: avoid;
+    font-family: '맑은 고딕', 'Malgun Gothic', 'Arial', sans-serif;
+    font-size: 9pt;
+    line-height: 1.2;
+    color: #1f2937;
+}
+
+.estimate-preview h1, .daily-preview h1 {
+    text-align: center;
+    font-size: 16pt;
+    color: #1f2937;
+    font-weight: bold;
+    margin-bottom: 10px;
+    border: none;
+    padding-bottom: 0;
+    text-transform: none;
+    letter-spacing: 2px;
+    text-shadow: none;
+    font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20mm;
+    padding: 15mm;
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.preview-company, .preview-client {
+    flex: 1;
+}
+
+.preview-company h3, .preview-client h3 {
+    color: #ecf0f1;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 2px solid #e74c3c;
+    padding-bottom: 8px;
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 7pt;
+    box-shadow: none;
+}
+
+.preview-table th, .preview-table td {
+    border: 1px solid #9ca3af;
+    padding: 4px 3px;
+    text-align: center;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+.preview-table th {
+    background: #f3f4f6;
+    color: #1f2937;
+    font-weight: bold;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 7pt;
+}
+
+.preview-total {
+    text-align: right;
+    margin-top: 15mm;
+    font-size: 1.2em;
+    background: #ecf0f1;
+    padding: 15mm;
+    border-radius: 8px;
+    border-left: 6px solid #34495e;
+}
+
+.preview-total div {
+    margin: 8px 0;
+    padding: 8px 20px;
+    font-weight: 700;
+}
+
+.preview-total .final-total {
+    font-weight: 900;
+    font-size: 1.6em;
+    color: #e74c3c;
+    background: #2c3e50;
+    color: white;
+    margin: 10px -15mm;
+    padding: 15px 20px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* 워드 스타일 견적서 - 컴팩트 */
+.preview-title {
+    text-align: center;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #d1d5db;
+    padding-bottom: 8px;
+}
+
+.preview-title h1 {
+    font-size: 16pt;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    color: #1f2937;
+}
+
+.estimate-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    font-weight: normal;
+    color: #4b5563;
+    margin-bottom: 3px;
+}
+
+.business-info {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.supplier-info, .customer-info {
+    flex: 1;
+}
+
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #9ca3af;
+    font-size: 7pt;
+}
+
+.info-table th, .info-table td {
+    border: 1px solid #9ca3af;
+    padding: 3px 5px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.info-table .section-title {
+    background: #f3f4f6;
+    color: #1f2937;
+    text-align: center;
+    font-weight: bold;
+    font-size: 8pt;
+}
+
+.info-table .label {
+    background: #f9fafb;
+    font-weight: normal;
+    width: 60px;
+    text-align: center;
+    font-size: 7pt;
+    color: #4b5563;
+}
+
+.amount-summary {
+    margin: 10px 0;
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #9ca3af;
+    font-size: 8pt;
+}
+
+.summary-table td {
+    border: 1px solid #9ca3af;
+    padding: 5px 8px;
+    text-align: center;
+    font-weight: normal;
+}
+
+.summary-table .label {
+    background: #f9fafb;
+    width: 15%;
+    font-weight: bold;
+    color: #4b5563;
+}
+
+.summary-table .amount {
+    width: 18%;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+.summary-table .final {
+    background: #e5e7eb;
+    color: #1f2937;
+    font-size: 9pt;
+    font-weight: bold;
+}
+
+.payment-details, .estimate-conditions {
+    margin: 8px 0;
+    padding: 6px;
+    background: #ffffff;
+    border: none;
+    font-size: 7pt;
+}
+
+.payment-details h4, .estimate-conditions h4 {
+    margin-top: 0;
+    margin-bottom: 4px;
+    color: #1f2937;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+.estimate-conditions ul {
+    margin: 4px 0;
+    padding-left: 12px;
+}
+
+.estimate-conditions li {
+    margin: 1px 0;
+    line-height: 1.3;
+    font-size: 7pt;
+}
+
+.signature-area {
+    margin-top: 15px;
+    page-break-inside: avoid;
+    font-size: 8pt;
+}
+
+/* 반응형 디자인 수정 */
+@media (max-width: 768px) {
+    .business-info {
+        flex-direction: column;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .estimate-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+}
+
+/* PDF/Print 스타일 */
+@media print {
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .container, .tab-container, .preview-actions {
+        display: none;
+    }
+    
+    #preview-section {
+        display: block !important;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .estimate-preview, .daily-preview {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 15mm;
+        box-shadow: none;
+        page-break-inside: avoid;
+        min-height: calc(100vh - 30mm);
+    }
+    
+    .info-table .section-title {
+        background: #f3f4f6 !important;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+    
+    .preview-table th {
+        background: #f3f4f6 !important;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+    
+    .summary-table .final {
+        background: #e5e7eb !important;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+}
+
+/* 데이터베이스 테이블 스타일 */
+#records-table tr.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+#records-table tr:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+#records-table tr.selected:hover {
+    background-color: #0056b3;
+}
+
+/* 다중 선택 액션 영역 */
+.bulk-actions {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #dee2e6;
+}
+
+.selection-info {
+    font-weight: bold;
+    color: #495057;
+}
+
+.bulk-delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 15px;
+    font-weight: 600;
+}
+
+.bulk-delete-btn:hover:not(:disabled) {
+    background: #c82333;
+}
+
+.bulk-delete-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* 체크박스 열 */
+.checkbox-column {
+    width: 40px;
+    text-align: center;
+}
+
+.record-checkbox {
+    cursor: pointer;
+}
+
+/* 체크박스 컬럼 스타일 */
+.checkbox-column {
+    width: 40px;
+    text-align: center;
+}
+
+.record-checkbox {
+    cursor: pointer;
+    transform: scale(1.2);
+}
+
+/* 선택된 개수 표시 */
+.selection-info {
+    background: #e9ecef;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.bulk-actions {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.bulk-delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.bulk-delete-btn:hover {
+    background: #c82333;
+}
+
+.bulk-delete-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* 고해상도 화면을 위한 스타일 */
+@media screen and (min-width: 1400px) {
+    .estimate-preview, .daily-preview {
+        transform: scale(1.2);
+        transform-origin: top center;
+        margin-bottom: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .form-group label {
+        min-width: auto;
+        margin-bottom: 5px;
+    }
+    
+    .preview-header {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    table, .preview-table {
+        font-size: 12px;
+    }
+    
+    .actions button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+    }
+}
