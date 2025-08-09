@@ -1,0 +1,26 @@
+[Unit]
+Description=Korean Interior Estimate Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/estimate-webapp
+ExecStart=/opt/estimate-webapp/venv/bin/python app.py
+Restart=always
+RestartSec=10
+
+# Environment
+Environment=FLASK_ENV=production
+Environment=FLASK_APP=app.py
+
+# Security
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/estimate-webapp
+
+[Install]
+WantedBy=multi-user.target
