@@ -15,8 +15,7 @@ sudo ./install.sh
 ```
 
 ### 접속 방법
-- **nginx 설정 시**: `http://your-server-ip`
-- **nginx 미설정 시**: `http://your-server-ip:5002`
+- **URL**: `http://your-server-ip:5002`
 
 ## 📋 주요 기능
 
@@ -52,6 +51,7 @@ sudo ./install.sh
 - **Python**: 3.6 이상
 - **메모리**: 최소 512MB RAM
 - **저장공간**: 최소 100MB
+- **네트워크**: 포트 5002 접근 가능
 
 ## 서비스 관리
 
@@ -100,7 +100,9 @@ sudo journalctl -u estimate-webapp -f
 
 - **사용자 격리**: www-data 사용자로 실행하여 시스템 보안 강화
 - **디렉토리 권한**: 애플리케이션 디렉토리만 접근 가능
-- **systemd 보안**: NoNewPrivileges, PrivateTmp, ProtectSystem 설정
+- **systemd 보안**: NoNewPrivileges, PrivateTmp, ProtectSystem 등 강화된 보안 설정
+- **네트워크**: Flask 앱이 직접 포트 5002에서 실행 (nginx 불필요)
+- **방화벽**: 필요시 포트 5002만 개방하여 최소한의 노출
 
 ## 백업 및 복구
 
@@ -135,6 +137,16 @@ sudo netstat -tlnp | grep :5002
 
 # app.py에서 포트 변경 후 서비스 재시작
 sudo systemctl restart estimate-webapp
+```
+
+### 방화벽 설정 (필요시)
+```bash
+# Ubuntu/Debian (ufw)
+sudo ufw allow 5002
+
+# CentOS/RHEL (firewalld)
+sudo firewall-cmd --permanent --add-port=5002/tcp
+sudo firewall-cmd --reload
 ```
 
 ## 업데이트

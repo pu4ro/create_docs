@@ -740,7 +740,8 @@ if __name__ == '__main__':
     
     # 웹 서버 실행
     print("=== 인테리어 견적서 & 영수증 기록 생성기 ===")
-    print("웹 브라우저에서 http://127.0.0.1:5002 으로 접속하세요.")
-    print("종료하려면 Ctrl+C를 누르세요.")
+    print("웹 서버가 포트 5002에서 시작됩니다.")
+    print("systemd로 실행 중일 때는 journalctl -u estimate-webapp -f 로 로그를 확인하세요.")
     
-    app.run(debug=True, host='127.0.0.1', port=5002)
+    # 모든 인터페이스에서 접근 가능하도록 설정
+    app.run(debug=False, host='0.0.0.0', port=5002)

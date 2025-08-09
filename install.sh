@@ -31,7 +31,7 @@ fi
 # Install system dependencies
 echo -e "${YELLOW}Installing system dependencies...${NC}"
 apt-get update
-apt-get install -y python3 python3-pip python3-venv nginx systemd
+apt-get install -y python3 python3-pip python3-venv systemd
 
 # Create www-data user if it doesn't exist
 if ! id "$APP_USER" &>/dev/null; then
@@ -66,42 +66,8 @@ cp $APP_DIR/$SERVICE_NAME /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 
-# Configure nginx (optional)
-read -p "Do you want to configure nginx reverse proxy? (y/N): " setup_nginx
-if [[ $setup_nginx =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Configuring nginx...${NC}"
-    
-    cat > /etc/nginx/sites-available/$APP_NAME << EOF
-server {
-    listen 80;
-    server_name localhost _;
-
-    location / {
-        proxy_pass http://127.0.0.1:$APP_PORT;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-
-    location /static {
-        alias $APP_DIR/static;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-}
-EOF
-
-    ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
-    nginx -t && systemctl restart nginx
-    systemctl enable nginx
-    
-    echo -e "${GREEN}Nginx configured successfully!${NC}"
-    echo -e "${GREEN}Access the application at: http://your-server-ip${NC}"
-else
-    echo -e "${GREEN}Skipping nginx configuration.${NC}"
-    echo -e "${GREEN}Access the application at: http://your-server-ip:$APP_PORT${NC}"
-fi
+# Flask app will run directly on port 5002
+echo -e "${GREEN}Flask application will run directly on port $APP_PORT${NC}"
 
 # Start the service
 echo -e "${YELLOW}Starting the application service...${NC}"
@@ -117,16 +83,21 @@ else
 fi
 
 echo
+echo
 echo -e "${GREEN}=== Installation Complete ===${NC}"
 echo -e "${GREEN}Service Status:${NC} $(systemctl is-active $SERVICE_NAME)"
-echo -e "${GREEN}Service Commands:${NC}"
+echo
+echo -e "${GREEN}Access the application at: http://your-server-ip:$APP_PORT${NC}"
+echo
+echo -e "${GREEN}Service Management Commands:${NC}"
 echo "  Start:   systemctl start $SERVICE_NAME"
 echo "  Stop:    systemctl stop $SERVICE_NAME"
 echo "  Restart: systemctl restart $SERVICE_NAME"
 echo "  Status:  systemctl status $SERVICE_NAME"
 echo "  Logs:    journalctl -u $SERVICE_NAME -f"
 echo
-echo -e "${GREEN}Application installed and running as a system service!${NC}"
+echo -e "${GREEN}Application installed and running as a systemd service!${NC}"
+echo -e "${YELLOW}Note: Make sure to open port $APP_PORT in your firewall if needed.${NC}"
 
 # Show final status
 echo -e "${YELLOW}Final Status Check:${NC}"
