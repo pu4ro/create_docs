@@ -2609,3 +2609,370 @@ function loadBankInfo() {
     
     alert('은행계좌 정보가 불러와졌습니다.');
 }
+
+// ===== 드롭다운 메뉴 시스템 =====
+
+// 드롭다운 토글 함수들
+function toggleCompanyMenu(button) {
+    const dropdown = button.closest('.dropdown');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    toggleDropdown(menu);
+}
+
+function toggleClientMenu(button) {
+    const dropdown = button.closest('.dropdown');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    toggleDropdown(menu);
+}
+
+function toggleBankMenu(button) {
+    const dropdown = button.closest('.dropdown');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    toggleDropdown(menu);
+}
+
+function toggleActionMenu(button) {
+    const dropdown = button.closest('.dropdown');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    toggleDropdown(menu);
+}
+
+function toggleDailyActionMenu(button) {
+    const dropdown = button.closest('.dropdown');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    toggleDropdown(menu);
+}
+
+// 공통 드롭다운 토글 로직
+function toggleDropdown(menu) {
+    // 다른 모든 드롭다운 메뉴 닫기
+    document.querySelectorAll('.dropdown-menu.show').forEach(openMenu => {
+        if (openMenu !== menu) {
+            openMenu.classList.remove('show');
+        }
+    });
+    
+    // 현재 메뉴 토글
+    menu.classList.toggle('show');
+}
+
+// 외부 클릭 시 드롭다운 닫기
+document.addEventListener('click', function(e) {
+    // 드롭다운 버튼이나 메뉴가 아닌 곳을 클릭했을 때
+    if (!e.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+// ===== 알림 시스템 =====
+
+function showNotification(message, type = 'info', duration = 5000) {
+    const container = document.getElementById('notification-container');
+    if (!container) return;
+
+    // 알림 요소 생성
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    // 아이콘 결정
+    let icon = 'fas fa-info-circle';
+    switch (type) {
+        case 'success': icon = 'fas fa-check-circle'; break;
+        case 'error': icon = 'fas fa-exclamation-circle'; break;
+        case 'warning': icon = 'fas fa-exclamation-triangle'; break;
+    }
+    
+    notification.innerHTML = `
+        <i class="${icon}"></i>
+        <span>${message}</span>
+        <button class="notification-close" onclick="hideNotification(this)">&times;</button>
+    `;
+    
+    container.appendChild(notification);
+    
+    // 애니메이션으로 표시
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // 자동으로 사라지게 하기
+    setTimeout(() => {
+        hideNotification(notification.querySelector('.notification-close'));
+    }, duration);
+}
+
+function hideNotification(closeButton) {
+    const notification = closeButton.closest('.notification');
+    notification.classList.remove('show');
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 300);
+}
+
+// ===== 로딩 오버레이 =====
+
+function showLoading(message = '처리 중...') {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.querySelector('.loading-spinner p').textContent = message;
+        overlay.style.display = 'flex';
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+}
+
+// ===== 향상된 테이블 관리 =====
+
+// 전체 삭제 함수
+function clearAllItems() {
+    if (confirm('정말로 모든 견적 항목을 삭제하시겠습니까?')) {
+        const tbody = document.querySelector('#estimate-items tbody');
+        if (tbody) {
+            // 첫 번째 행만 남기고 모두 삭제
+            const rows = tbody.querySelectorAll('tr');
+            for (let i = rows.length - 1; i > 0; i--) {
+                rows[i].remove();
+            }
+            
+            // 첫 번째 행 초기화
+            if (rows[0]) {
+                const inputs = rows[0].querySelectorAll('input');
+                inputs.forEach(input => input.value = input.type === 'number' && input.classList.contains('item-quantity') ? '1' : '');
+                
+                const selects = rows[0].querySelectorAll('select');
+                selects.forEach(select => select.selectedIndex = 0);
+            }
+            
+            updateEstimateTotal();
+            showNotification('모든 견적 항목이 삭제되었습니다.', 'success');
+        }
+    }
+}
+
+function clearAllDailyItems() {
+    if (confirm('정말로 모든 영수증 항목을 삭제하시겠습니까?')) {
+        const tbody = document.querySelector('#daily-items tbody');
+        if (tbody) {
+            // 첫 번째 행만 남기고 모두 삭제
+            const rows = tbody.querySelectorAll('tr');
+            for (let i = rows.length - 1; i > 0; i--) {
+                rows[i].remove();
+            }
+            
+            // 첫 번째 행 초기화
+            if (rows[0]) {
+                const inputs = rows[0].querySelectorAll('input');
+                inputs.forEach(input => input.value = '');
+                
+                const selects = rows[0].querySelectorAll('select');
+                selects.forEach(select => select.selectedIndex = 0);
+            }
+            
+            updateDailyTotal();
+            showNotification('모든 영수증 항목이 삭제되었습니다.', 'success');
+        }
+    }
+}
+
+// ===== 키보드 단축키 =====
+
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S로 견적서 저장
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        if (typeof saveEstimateToDB === 'function') {
+            saveEstimateToDB();
+        }
+    }
+    
+    // Ctrl+Enter로 견적서 생성
+    if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        if (typeof generateEstimate === 'function') {
+            generateEstimate();
+        }
+    }
+    
+    // ESC로 모든 드롭다운 닫기
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+// ===== 향상된 저장 함수들 (기존 함수들 래핑) =====
+
+// 기존 alert를 알림 시스템으로 대체하기 위한 함수들
+function enhancedAlert(message, type = 'info') {
+    showNotification(message, type);
+}
+
+// 기존 저장 함수들 개선
+const originalSaveCompanyToDB = saveCompanyToDB;
+saveCompanyToDB = function() {
+    try {
+        originalSaveCompanyToDB();
+        showNotification('회사 정보가 성공적으로 저장되었습니다.', 'success');
+    } catch (error) {
+        showNotification('회사 정보 저장에 실패했습니다.', 'error');
+    }
+};
+
+const originalSaveClientToDB = saveClientToDB;
+saveClientToDB = function() {
+    try {
+        originalSaveClientToDB();
+        showNotification('고객 정보가 성공적으로 저장되었습니다.', 'success');
+    } catch (error) {
+        showNotification('고객 정보 저장에 실패했습니다.', 'error');
+    }
+};
+
+const originalSaveBankToDB = saveBankToDB;
+saveBankToDB = function() {
+    try {
+        originalSaveBankToDB();
+        showNotification('계좌 정보가 성공적으로 저장되었습니다.', 'success');
+    } catch (error) {
+        showNotification('계좌 정보 저장에 실패했습니다.', 'error');
+    }
+};
+
+// ===== 초기화 시 환영 메시지 =====
+
+document.addEventListener('DOMContentLoaded', function() {
+    // UI 개선 기능 초기화
+    initUIEnhancements();
+    
+    // 환영 메시지는 다른 초기화가 완료된 후 표시
+    setTimeout(() => {
+        showNotification('견적서 생성기에 오신 것을 환영합니다! 💼', 'info', 6000);
+    }, 2000);
+});
+
+// UI 개선 기능들
+function initUIEnhancements() {
+    // 스크롤 시 플로팅 CTA 표시
+    initFloatingCTA();
+    
+    // 폼 진행상황 추적
+    initProgressTracking();
+    
+    // 키보드 접근성 개선
+    initKeyboardNavigation();
+}
+
+// 플로팅 CTA 관리
+function initFloatingCTA() {
+    const floatingCTA = document.getElementById('floating-cta');
+    const mainActions = document.querySelector('.main-actions');
+    
+    if (!floatingCTA || !mainActions) return;
+    
+    function toggleFloatingCTA() {
+        const rect = mainActions.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+        
+        if (isVisible) {
+            floatingCTA.style.display = 'none';
+        } else {
+            floatingCTA.style.display = 'block';
+        }
+    }
+    
+    window.addEventListener('scroll', toggleFloatingCTA);
+    toggleFloatingCTA(); // 초기 상태 설정
+}
+
+// 진행상황 추적
+function initProgressTracking() {
+    const steps = document.querySelectorAll('.step');
+    const progressFill = document.querySelector('.progress-fill');
+    
+    // 폼 필드 변화 감지
+    const requiredFields = [
+        'company-name', 'client-name', 'individual-name'
+    ];
+    
+    function updateProgress() {
+        let completedSteps = 0;
+        
+        // 1단계: 기본 정보 확인
+        const companyName = document.getElementById('company-name').value;
+        const clientName = document.getElementById('client-name').value || document.getElementById('individual-name').value;
+        
+        if (companyName && clientName) {
+            completedSteps = 1;
+            steps[0].classList.add('completed');
+            steps[1].classList.add('active');
+        }
+        
+        // 2단계: 견적 항목 확인
+        const itemRows = document.querySelectorAll('#estimate-items tbody tr');
+        let hasValidItems = false;
+        
+        itemRows.forEach(row => {
+            const itemName = row.querySelector('.item-name').value;
+            const itemPrice = row.querySelector('.item-price').value;
+            if (itemName && itemPrice) {
+                hasValidItems = true;
+            }
+        });
+        
+        if (hasValidItems && completedSteps >= 1) {
+            completedSteps = 2;
+            steps[1].classList.add('completed');
+            steps[2].classList.add('active');
+        }
+        
+        // 3단계는 견적서 생성 시
+        
+        // 진행률 업데이트
+        const progressPercent = Math.min((completedSteps + 1) * 33, 100);
+        if (progressFill) {
+            progressFill.style.width = progressPercent + '%';
+        }
+    }
+    
+    // 필드 변화 감지
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', updateProgress);
+        }
+    });
+    
+    // 테이블 변화 감지
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('item-name') || e.target.classList.contains('item-price')) {
+            updateProgress();
+        }
+    });
+}
+
+// 키보드 내비게이션 개선
+function initKeyboardNavigation() {
+    // 엔터 키로 다음 필드로 이동
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'button') {
+            e.preventDefault();
+            
+            const inputs = Array.from(document.querySelectorAll('input:not([type="button"]):not([type="submit"])'));
+            const currentIndex = inputs.indexOf(e.target);
+            const nextInput = inputs[currentIndex + 1];
+            
+            if (nextInput) {
+                nextInput.focus();
+            }
+        }
+    });
+}

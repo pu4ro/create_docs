@@ -4,27 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>견적서 & 명세서 생성기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>인테리어 견적서 & 시공명세서 생성기</h1>
+        <header class="modern-header">
+            <div class="header-content">
+                <div class="header-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="header-text">
+                    <h1>인테리어 견적서 & 시공명세서 생성기</h1>
+                    <p class="header-subtitle">3분 만에 전문적인 견적서 완성 • 실수 없는 자동 계산 • PDF 다운로드 즉시 가능</p>
+                    <div class="header-cta">
+                        <button onclick="document.getElementById('company-name').focus(); showTab('estimate')" class="primary-btn quick-start-btn">
+                            <i class="fas fa-rocket"></i>
+                            바로 시작하기
+                        </button>
+                        <div class="trust-indicators">
+                            <span><i class="fas fa-check-circle"></i> 자동 세금 계산</span>
+                            <span><i class="fas fa-check-circle"></i> 무료 사용</span>
+                            <span><i class="fas fa-check-circle"></i> 데이터 보안</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <div class="tab-container">
-            <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('estimate')">인테리어 견적서</button>
-                <button class="tab-btn" onclick="showTab('daily')">영수증 기록</button>
-                <button class="tab-btn" onclick="showTab('database')">데이터 관리</button>
-            </div>
+            <nav class="modern-tabs" role="tablist">
+                <button class="tab-btn active" onclick="showTab('estimate')" role="tab" aria-selected="true">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>인테리어 견적서</span>
+                </button>
+                <button class="tab-btn" onclick="showTab('daily')" role="tab" aria-selected="false">
+                    <i class="fas fa-receipt"></i>
+                    <span>영수증 기록</span>
+                </button>
+                <button class="tab-btn" onclick="showTab('database')" role="tab" aria-selected="false">
+                    <i class="fas fa-database"></i>
+                    <span>데이터 관리</span>
+                </button>
+            </nav>
 
             <!-- 견적서 섹션 -->
-            <div id="estimate-tab" class="tab-content active">
-                <div class="form-section">
-                    <h2>견적서 정보</h2>
+            <main id="estimate-tab" class="tab-content active" role="tabpanel">
+                <!-- 진행 상황 표시기 -->
+                <div class="progress-indicator">
+                    <div class="progress-steps">
+                        <div class="step active" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">기본 정보</div>
+                        </div>
+                        <div class="step" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">견적 항목</div>
+                        </div>
+                        <div class="step" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">완료</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 33%"></div>
+                    </div>
+                </div>
+                <div class="form-section modern-card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-info-circle"></i> 견적서 정보</h2>
+                        <div class="section-divider"></div>
+                    </div>
                     
                     <!-- 견적서 불러오기 드롭다운 -->
                     <div class="estimate-load-section">
@@ -39,14 +94,25 @@
                     </div>
                     
                     <div class="company-info">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3>공급업체 정보</h3>
-                            <div>
-                                <select id="company-dropdown" onchange="onCompanyDropdownChange()" style="margin-right: 10px;">
+                        <div class="section-title-bar">
+                            <h3><i class="fas fa-building"></i> 공급업체 정보</h3>
+                            <div class="control-group">
+                                <select id="company-dropdown" onchange="onCompanyDropdownChange()" class="modern-select">
                                     <option value="">회사 선택</option>
+                                    <option value="default-construction">기본건설</option>
+                                    <option value="premium-interior">프리미엄 인테리어</option>
+                                    <option value="smart-construction">스마트 건설</option>
+                                    <option value="eco-interior">친환경 인테리어</option>
                                 </select>
-                                <button type="button" onclick="saveCompanyToDB()" class="save-btn">저장</button>
-                                <button type="button" onclick="loadCompanyInfo()" class="load-btn">불러오기</button>
+                                <div class="dropdown">
+                                    <button class="dropdown-btn" onclick="toggleCompanyMenu(this)">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <button onclick="saveCompanyToDB()"><i class="fas fa-save"></i> 저장</button>
+                                        <button onclick="loadCompanyInfo()"><i class="fas fa-download"></i> 불러오기</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="form-row">
@@ -94,18 +160,32 @@
                     </div>
 
                     <div class="client-info">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3>공급받는자 정보</h3>
-                            <div>
-                                <select id="client-dropdown" onchange="onClientDropdownChange()" style="margin-right: 10px;">
-                                    <option value="">고객 선택</option>
-                                </select>
-                                <select id="client-type" onchange="toggleClientFields()">
+                        <div class="section-title-bar">
+                            <h3><i class="fas fa-users"></i> 공급받는자 정보</h3>
+                            <div class="control-group">
+                                <select id="client-type" onchange="toggleClientFields()" class="modern-select">
                                     <option value="business">수요업체</option>
-                                    <option value="individual">단일고객 공사</option>
+                                    <option value="individual">개인 고객</option>
                                 </select>
-                                <button type="button" onclick="saveClientToDB()" class="save-btn">저장</button>
-                                <button type="button" onclick="loadClientInfo()" class="load-btn">불러오기</button>
+                                <select id="client-dropdown" onchange="onClientDropdownChange()" class="modern-select">
+                                    <option value="">고객 선택</option>
+                                    <option value="samsung-electronics">삼성전자</option>
+                                    <option value="lg-display">LG디스플레이</option>
+                                    <option value="hyundai-motor">현대자동차</option>
+                                    <option value="sk-hynix">SK하이닉스</option>
+                                    <option value="individual-kim">김귀고객 개인</option>
+                                    <option value="individual-park">박고객 개인</option>
+                                    <option value="individual-lee">이고객 개인</option>
+                                </select>
+                                <div class="dropdown">
+                                    <button class="dropdown-btn" onclick="toggleClientMenu(this)">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <button onclick="saveClientToDB()"><i class="fas fa-save"></i> 저장</button>
+                                        <button onclick="loadClientInfo()"><i class="fas fa-download"></i> 불러오기</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -173,10 +253,10 @@
                     </div>
 
                     <div class="items-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h3>견적 항목</h3>
-                            <div>
-                                <select id="category-filter" onchange="filterByCategory()">
+                        <div class="section-title-bar">
+                            <h3><i class="fas fa-list"></i> 견적 항목</h3>
+                            <div class="control-group">
+                                <select id="category-filter" onchange="filterByCategory()" class="modern-select">
                                     <option value="">전체 공종</option>
                                     <option value="철거공사">철거공사</option>
                                     <option value="목공사">목공사</option>
@@ -188,7 +268,10 @@
                                     <option value="도장공사">도장공사</option>
                                     <option value="기타">기타</option>
                                 </select>
-                                <button type="button" onclick="showItemTemplates()" class="template-btn">템플릿</button>
+                                <button type="button" onclick="showItemTemplates()" class="template-btn">
+                                    <i class="fas fa-plus-circle"></i>
+                                    템플릿 추가
+                                </button>
                             </div>
                         </div>
                         <table id="estimate-items">
@@ -229,7 +312,12 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <button type="button" onclick="addEstimateRow()">항목 추가</button>
+                        <div class="table-actions">
+                            <button type="button" onclick="addEstimateRow()" class="add-item-btn">
+                                <i class="fas fa-plus"></i>
+                                항목 추가
+                            </button>
+                        </div>
                     </div>
 
                     <div class="total-section">
@@ -248,14 +336,25 @@
                     </div>
 
                     <div class="payment-info">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3>입금계좌 정보</h3>
-                            <div>
-                                <select id="bank-dropdown" onchange="onBankDropdownChange()" style="margin-right: 10px;">
+                        <div class="section-title-bar">
+                            <h3><i class="fas fa-credit-card"></i> 입금계좌 정보</h3>
+                            <div class="control-group">
+                                <select id="bank-dropdown" onchange="onBankDropdownChange()" class="modern-select">
                                     <option value="">계좌 선택</option>
+                                    <option value="kb-main">국민은행 메인</option>
+                                    <option value="shinhan-business">신한은행 사업자</option>
+                                    <option value="woori-corporate">우리은행 기업</option>
+                                    <option value="hana-premium">하나은행 프리미엄</option>
                                 </select>
-                                <button type="button" onclick="saveBankToDB()" class="save-btn">저장</button>
-                                <button type="button" onclick="loadBankInfo()" class="load-btn">불러오기</button>
+                                <div class="dropdown">
+                                    <button class="dropdown-btn" onclick="toggleBankMenu(this)">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <button onclick="saveBankToDB()"><i class="fas fa-save"></i> 저장</button>
+                                        <button onclick="loadBankInfo()"><i class="fas fa-download"></i> 불러오기</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="form-row">
@@ -274,11 +373,26 @@
                         </div>
                     </div>
 
-                    <div class="actions">
-                        <button onclick="saveEstimateToDB()" class="save-btn">견적서 DB 저장</button>
-                        <button onclick="generateEstimate()">견적서 생성</button>
-                        <button onclick="exportEstimateToExcel()">엑셀 내보내기 (Python)</button>
-                        <button onclick="exportEstimateToPDF()">PDF 내보내기</button>
+                    <div class="main-actions">
+                        <div class="action-group primary">
+                            <button onclick="generateEstimate()" class="primary-btn">
+                                <i class="fas fa-file-alt"></i>
+                                견적서 생성
+                            </button>
+                        </div>
+                        <div class="action-group secondary">
+                            <div class="dropdown">
+                                <button class="secondary-btn dropdown-toggle" onclick="toggleActionMenu(this)">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                    추가 옵션
+                                </button>
+                                <div class="dropdown-menu">
+                                    <button onclick="saveEstimateToDB()"><i class="fas fa-save"></i> DB 저장</button>
+                                    <button onclick="exportEstimateToExcel()"><i class="fas fa-file-excel"></i> 엑셀 내보내기</button>
+                                    <button onclick="exportEstimateToPDF()"><i class="fas fa-file-pdf"></i> PDF 내보내기</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -328,7 +442,12 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <button type="button" onclick="addDailyRow()">항목 추가</button>
+                        <div class="table-actions">
+                            <button type="button" onclick="addDailyRow()" class="add-item-btn">
+                                <i class="fas fa-plus"></i>
+                                항목 추가
+                            </button>
+                        </div>
                     </div>
 
                     <div class="daily-total-section">
@@ -338,10 +457,25 @@
                         </div>
                     </div>
 
-                    <div class="actions">
-                        <button onclick="saveDailyRecordToDB()" class="save-btn">영수증 기록 DB 저장</button>
-                        <button onclick="generateDaily()">영수증 기록 생성</button>
-                        <button onclick="exportDailyToExcel()">엑셀 내보내기 (Python)</button>
+                    <div class="main-actions">
+                        <div class="action-group primary">
+                            <button onclick="generateDaily()" class="primary-btn">
+                                <i class="fas fa-receipt"></i>
+                                영수증 기록 생성
+                            </button>
+                        </div>
+                        <div class="action-group secondary">
+                            <div class="dropdown">
+                                <button class="secondary-btn dropdown-toggle" onclick="toggleDailyActionMenu(this)">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                    추가 옵션
+                                </button>
+                                <div class="dropdown-menu">
+                                    <button onclick="saveDailyRecordToDB()"><i class="fas fa-save"></i> DB 저장</button>
+                                    <button onclick="exportDailyToExcel()"><i class="fas fa-file-excel"></i> 엑셀 내보내기</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -363,7 +497,10 @@
                                     <option value="clients">고객 정보</option>
                                 </select>
                             </div>
-                            <button onclick="loadDatabaseRecords()" class="load-btn">조회</button>
+                            <button onclick="loadDatabaseRecords()" class="primary-btn">
+                                <i class="fas fa-search"></i>
+                                조회
+                            </button>
                         </div>
                         
                         <div id="database-records">
@@ -388,24 +525,52 @@
                                 <tbody id="records-body"></tbody>
                             </table>
                             
-                            <div id="record-actions" style="display: none; margin-top: 15px;">
-                                <button onclick="loadSelectedRecord()" class="save-btn">선택한 데이터 불러오기</button>
-                                <button onclick="deleteSelectedRecord()" class="delete-btn">선택한 데이터 삭제</button>
-                                <button onclick="clearSelection()" class="load-btn">선택 해제</button>
+                            <div id="record-actions" class="record-actions" style="display: none;">
+                                <button onclick="loadSelectedRecord()" class="secondary-btn">
+                                    <i class="fas fa-download"></i>
+                                    선택한 데이터 불러오기
+                                </button>
+                                <button onclick="deleteSelectedRecord()" class="delete-btn">
+                                    <i class="fas fa-trash"></i>
+                                    선택한 데이터 삭제
+                                </button>
+                                <button onclick="clearSelection()" class="secondary-btn">
+                                    <i class="fas fa-times"></i>
+                                    선택 해제
+                                </button>
                             </div>
                         </div>
                     </div>
                     
                     <div class="database-actions" style="margin-top: 30px;">
                         <h3>데이터베이스 관리</h3>
-                        <div class="actions">
-                            <button onclick="exportDatabase()">데이터 내보내기</button>
-                            <button onclick="importDatabase()">데이터 가져오기</button>
-                            <button onclick="clearDatabase()">데이터 초기화</button>
+                        <div class="database-actions">
+                            <div class="action-grid">
+                                <button onclick="exportDatabase()" class="db-action-btn export">
+                                    <i class="fas fa-download"></i>
+                                    <span>데이터 내보내기</span>
+                                </button>
+                                <button onclick="importDatabase()" class="db-action-btn import">
+                                    <i class="fas fa-upload"></i>
+                                    <span>데이터 가져오기</span>
+                                </button>
+                                <button onclick="clearDatabase()" class="db-action-btn danger">
+                                    <i class="fas fa-trash"></i>
+                                    <span>데이터 초기화</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- 플로팅 액션 버튼 -->
+        <div class="floating-cta" id="floating-cta" style="display: none;">
+            <button onclick="generateEstimate()" class="floating-btn" title="견적서 생성">
+                <i class="fas fa-file-alt"></i>
+                <span>견적서 생성</span>
+            </button>
         </div>
 
         <!-- 미리보기 섹션 -->
@@ -466,6 +631,19 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 알림 시스템 -->
+    <div id="notification-container" class="notification-container">
+        <!-- 동적으로 알림이 여기에 추가됩니다 -->
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>처리 중...</p>
         </div>
     </div>
 

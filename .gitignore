@@ -54,6 +54,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+app.log
 
 # Temporary files
 *.tmp
@@ -69,3 +70,21 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Runtime data and generated files
+data/
+backups/
+*.xlsx
+qa_test_*.xlsx
+environment-info.txt
+start-app.sh
+start-production.sh
+
+# Test and development directories
+test_env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker volumes and runtime files
+docker-volumes/

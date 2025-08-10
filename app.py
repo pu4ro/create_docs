@@ -6,9 +6,12 @@ Python Flask 웹 애플리케이션
 """
 
 from flask import Flask, render_template, request, jsonify, send_file
+from flask_cors import CORS
 import sqlite3
 import json
 import os
+import secrets
+import logging
 from datetime import datetime
 import pandas as pd
 from openpyxl import Workbook
@@ -17,7 +20,23 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 import io
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
+
+# 보안 설정
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+
+# CORS 설정
+CORS(app, origins=['http://localhost:*', 'http://127.0.0.1:*'])
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # 데이터베이스 초기화
 def init_db():
@@ -308,7 +327,8 @@ def export_estimate_excel():
         )
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.exception("견적서 엑셀 내보내기 실패")
+        return error_response(f"엑셀 파일 생성 중 오류가 발생했습니다: {str(e)}", 500, "EXCEL_EXPORT_ERROR")
 
 # 영수증 기록 엑셀 생성
 @app.route('/api/export_daily_excel', methods=['POST'])
