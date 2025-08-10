@@ -212,11 +212,15 @@ async function loadDatabaseRecords() {
         
         // 백엔드 API 호출
         const response = await fetch(apiUrl);
+        const result = await response.json();
+        
         if (!response.ok) {
-            throw new Error(`API 호출 실패: ${response.status}`);
+            const errorMessage = result.message || `API 호출 실패: ${response.status}`;
+            throw new Error(errorMessage);
         }
         
-        const records = await response.json();
+        // 새로운 API 응답 포맷 처리 - data 속성에서 실제 데이터 추출
+        const records = result.data || result;
         console.log('조회된 레코드:', records);
         
         // 레코드 데이터를 테이블에 추가
@@ -507,12 +511,17 @@ async function deleteSelectedRecord() {
             method: 'DELETE'
         });
         
+        const result = await response.json();
+        
         if (!response.ok) {
-            throw new Error(`삭제 실패: ${response.status}`);
+            // 새로운 API 응답 포맷 처리
+            const errorMessage = result.message || `삭제 실패: ${response.status}`;
+            throw new Error(errorMessage);
         }
         
-        const result = await response.json();
-        alert(result.message || '데이터가 삭제되었습니다.');
+        // 성공한 경우 메시지 표시
+        const successMessage = result.message || result.data?.message || '데이터가 삭제되었습니다.';
+        alert(successMessage);
         loadDatabaseRecords(); // 테이블 새로고침
         
     } catch (error) {
@@ -790,15 +799,16 @@ async function loadCompanyDropdown() {
         const response = await fetch('/api/companies');
         if (!response.ok) return;
         
-        const companies = await response.json();
+        const result = await response.json();
+        const companies = result.data || result;
         const select = document.getElementById('company-dropdown');
         if (!select) return;
         
         select.innerHTML = '<option value="">회사 선택</option>';
         companies.forEach(company => {
             const option = document.createElement('option');
-            option.value = company[0]; // id
-            option.textContent = company[1]; // name
+            option.value = company.id;
+            option.textContent = company.name;
             select.appendChild(option);
         });
     } catch (error) {
@@ -839,19 +849,20 @@ async function onCompanyDropdownChange() {
         const response = await fetch('/api/companies');
         if (!response.ok) return;
         
-        const companies = await response.json();
-        const company = companies.find(c => c[0] == companyId);
+        const result = await response.json();
+        const companies = result.data || result;
+        const company = companies.find(c => c.id == companyId);
         
         if (company) {
-            document.getElementById('company-name').value = company[1] || '';
-            document.getElementById('business-number').value = company[2] || '';
-            document.getElementById('company-address').value = company[3] || '';
-            document.getElementById('company-ceo').value = company[4] || '';
-            document.getElementById('company-type').value = company[5] || '';
-            document.getElementById('company-item').value = company[6] || '';
-            document.getElementById('company-phone').value = company[7] || '';
-            document.getElementById('company-fax').value = company[8] || '';
-            document.getElementById('company-manager').value = company[9] || '';
+            document.getElementById('company-name').value = company.name || '';
+            document.getElementById('business-number').value = company.business_number || '';
+            document.getElementById('company-address').value = company.address || '';
+            document.getElementById('company-ceo').value = company.ceo || '';
+            document.getElementById('company-type').value = company.type || '';
+            document.getElementById('company-item').value = company.item || '';
+            document.getElementById('company-phone').value = company.phone || '';
+            document.getElementById('company-fax').value = company.fax || '';
+            document.getElementById('company-manager').value = company.manager || '';
         }
     } catch (error) {
         console.error('회사 정보 로드 오류:', error);
@@ -1389,7 +1400,7 @@ function generateEstimate() {
     let itemsHtml = '';
     let hasValidItems = false;
     
-    rows.forEach(row => {
+    rows.forEach((row, index) => {
         const category = row.querySelector('.item-category') ? row.querySelector('.item-category').value : '';
         const itemName = row.querySelector('.item-name').value;
         const spec = row.querySelector('.item-spec') ? row.querySelector('.item-spec').value : '';
@@ -1407,14 +1418,14 @@ function generateEstimate() {
             
             itemsHtml += `
                 <tr>
-                    <td>${category}</td>
-                    <td>${itemName}</td>
-                    <td>${specOnly}</td>
-                    <td>${unit}</td>
-                    <td>${formatNumber(quantity)}</td>
-                    <td>${formatNumber(price)}</td>
-                    <td>${total.replace('원', '')}</td>
-                    <td>${note}</td>
+                    <td class="col-no">${index + 1}</td>
+                    <td class="col-item">${itemName}</td>
+                    <td class="col-spec">${specOnly || '-'}</td>
+                    <td class="col-qty">${formatNumber(quantity)}</td>
+                    <td class="col-unit">${unit}</td>
+                    <td class="col-price">${formatNumber(price)}원</td>
+                    <td class="col-amount">${total.replace('원', '')}원</td>
+                    <td class="col-note">${note || '-'}</td>
                 </tr>
             `;
         }
@@ -1429,110 +1440,716 @@ function generateEstimate() {
     const tax = document.getElementById('tax').textContent;
     const total = document.getElementById('total').textContent;
     
-    const previewHtml = `
-        <div class="estimate-preview">
-            <div class="preview-title">
-                <h1>견 적 서</h1>
-                <div class="estimate-info">
-                    <div>견적번호: ${estimateNumber || 'EST-' + new Date().getFullYear() + new Date().getMonth() + new Date().getDate()}</div>
-                    <div>견적일자: ${formatDate(estimateDate)}</div>
-                </div>
-            </div>
-            
-            <div class="business-info">
-                <div class="supplier-info">
-                    <table class="info-table">
-                        <tr><th colspan="2" class="section-title">공급받는자</th></tr>
-                        <tr><td class="label">등록번호</td><td>${clientBusiness || (clientType === 'individual' ? '개인' : '')}</td></tr>
-                        <tr><td class="label">상호</td><td><strong>${clientName}</strong></td></tr>
-                        <tr><td class="label">성명</td><td>${clientCeo || ''}</td></tr>
-                        <tr><td class="label">주소</td><td>${clientAddress || ''}</td></tr>
-                        <tr><td class="label">전화번호</td><td>${clientContact || ''}</td></tr>
-                    </table>
-                </div>
-                <div class="customer-info">
-                    <table class="info-table">
-                        <tr><th colspan="2" class="section-title">공급자</th></tr>
-                        <tr><td class="label">등록번호</td><td>${businessNumber || ''}</td></tr>
-                        <tr><td class="label">상호</td><td><strong>${companyName}</strong></td></tr>
-                        <tr><td class="label">성명</td><td>${companyCeo || ''}</td></tr>
-                        <tr><td class="label">주소</td><td>${companyAddress}</td></tr>
-                        <tr><td class="label">업태</td><td>${companyType}</td></tr>
-                        <tr><td class="label">종목</td><td>${companyItem}</td></tr>
-                        <tr><td class="label">전화번호</td><td>${companyPhone}</td></tr>
-                    </table>
-                </div>
-            </div>
-            
-            <table class="preview-table">
-                <thead>
-                    <tr>
-                        <th>공종</th>
-                        <th>품목</th>
-                        <th>규격</th>
-                        <th>단위</th>
-                        <th>수량</th>
-                        <th>단가</th>
-                        <th>공급가액</th>
-                        <th>비고</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHtml}
-                </tbody>
-            </table>
-            
-            <div class="amount-summary">
-                <div class="korean-amount" style="text-align: center; margin-bottom: 10px; padding: 8px; border: 1px solid #9ca3af; background: #f9fafb; font-size: 9pt; font-weight: bold;">
-                    금액: ${numberToKorean(Math.round(parseFloat(total.replace(/[^0-9]/g, ''))))}
-                </div>
-                <table class="summary-table">
-                    <tr>
-                        <td class="label">공급가액</td>
-                        <td class="amount">${subtotal}</td>
-                        <td class="label">세액</td>
-                        <td class="amount">${tax}</td>
-                        <td class="label final">합계금액</td>
-                        <td class="amount final">${total}</td>
-                    </tr>
-                </table>
-            </div>
-            
-            ${bankName ? `
-            <div class="payment-details">
-                <h4>■ 입금계좌</h4>
-                <p>은행: ${bankName} / 계좌: ${accountNumber} / 예금주: ${accountHolder}</p>
-            </div>
-            ` : ''}
-            
-            <div class="estimate-conditions">
-                <h4>■ 견적조건</h4>
-                <ul>
-                    <li>상기 견적금액은 부가가치세가 포함된 금액입니다.</li>
-                    <li>견적유효기간: ${formatDate(validUntil)} 까지</li>
-                    <li>납기: 계약체결 후 별도 협의</li>
-                    <li>하자보수: 준공 후 1년간</li>
-                    <li>기타 조건은 별도 협의합니다.</li>
-                </ul>
-            </div>
-            
-            <div class="signature-area">
-                <p style="text-align: center; margin-top: 40px;">
-                    위와 같이 견적서를 제출합니다.
-                </p>
-                <div style="text-align: right; margin-top: 30px;">
-                    <p><strong>${companyName}</strong></p>
-                    <p>대표자: ${companyCeo} ${generateDigitalSeal(companyName)}</p>
-                    <p>담당자: ${companyManager}</p>
-                </div>
-            </div>
-        </div>
-    `;
+    // 진행상황 완료 표시
+    const steps = document.querySelectorAll('.step');
+    const progressFill = document.querySelector('.progress-fill');
+    if (steps.length >= 3) {
+        steps[2].classList.add('completed');
+        steps[2].classList.add('active');
+    }
+    if (progressFill) {
+        progressFill.style.width = '100%';
+    }
+
+    const previewHtml = generateImprovedEstimateHTML({
+        companyName, businessNumber, companyAddress, companyCeo, companyType, companyItem,
+        companyPhone, companyFax, companyManager, clientType, clientName, clientBusiness,
+        clientAddress, clientCeo, clientContact, clientManager, estimateNumber, estimateDate,
+        validUntil, bankName, accountNumber, accountHolder, subtotal, tax, total, itemsHtml
+    });
     
     // 견적서를 데이터베이스에 저장
     saveEstimateToDB(companyName, clientName, estimateNumber, estimateDate, validUntil, subtotal, tax, total, itemsHtml);
     
     showPreview(previewHtml);
+}
+
+// 새로운 A4 최적화 견적서 HTML 생성 (최대 10행, 완전 반응형)
+function generateImprovedEstimateHTML(data) {
+    return `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>견적서 - ${data.clientName}</title>
+    <style>
+        /* CSS 변수 - 색상 커스터마이징 가능 */
+        :root {
+            --brand: #2563eb;
+            --brand2: #f97316; 
+            --ok: #10b981;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        /* A4 인쇄 설정 */
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
+        /* 기본 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.2;
+            color: #000;
+            background: #fff;
+        }
+
+        /* 메인 컨테이너 - A4 한 장 최적화 */
+        .estimate-container {
+            width: 210mm;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 8mm;
+            background: white;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+
+        /* 헤더 */
+        .estimate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6mm;
+            padding-bottom: 4mm;
+            border-bottom: 2px solid var(--brand);
+        }
+
+        .company-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .company-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--brand), #1d4ed8);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 16pt;
+        }
+
+        .company-title {
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--brand);
+            margin-bottom: 2px;
+        }
+
+        .document-info {
+            text-align: right;
+        }
+
+        .doc-title {
+            font-size: 20pt;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+
+        .doc-meta {
+            font-size: 8pt;
+            color: var(--gray-600);
+        }
+
+        .doc-meta div {
+            margin-bottom: 2px;
+        }
+
+        /* 공급자/공급받는자 정보 카드 */
+        .parties-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6mm;
+            margin-bottom: 6mm;
+        }
+
+        .party-card {
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .party-header {
+            padding: 4px 8px;
+            font-weight: 700;
+            font-size: 9pt;
+            color: white;
+        }
+
+        .supplier-header {
+            background: var(--brand);
+        }
+
+        .client-header {
+            background: var(--brand2);
+        }
+
+        .party-body {
+            padding: 6px 8px;
+        }
+
+        .info-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+            font-size: 8pt;
+            border-bottom: 1px dotted var(--gray-200);
+        }
+
+        .info-line:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--gray-600);
+            min-width: 50px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .highlight-supplier {
+            color: var(--brand) !important;
+            font-weight: 700 !important;
+        }
+
+        .highlight-client {
+            color: var(--brand2) !important;
+            font-weight: 700 !important;
+        }
+
+        /* 견적 표 - 최대 10행 최적화 */
+        .estimate-table-wrapper {
+            margin-bottom: 6mm;
+            position: relative;
+        }
+
+        .table-title {
+            font-size: 10pt;
+            font-weight: 700;
+            color: var(--brand);
+            margin-bottom: 3mm;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .estimate-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            border: 1px solid #000;
+        }
+
+        .estimate-table th {
+            background: #000;
+            color: white;
+            padding: 4px 3px;
+            text-align: center;
+            font-weight: 700;
+            border: 1px solid #000;
+            height: 8mm;
+        }
+
+        .estimate-table td {
+            padding: 3px;
+            border: 1px solid var(--gray-300);
+            text-align: center;
+            height: 6mm;
+            vertical-align: middle;
+        }
+
+        .estimate-table tbody tr:nth-child(even) {
+            background: var(--gray-50);
+        }
+
+        /* 컬럼 너비 최적화 */
+        .col-no { width: 5%; }
+        .col-item { width: 25%; text-align: left !important; padding-left: 4px !important; font-weight: 500; }
+        .col-spec { width: 12%; font-size: 7pt; }
+        .col-qty { width: 8%; }
+        .col-unit { width: 6%; font-size: 7pt; }
+        .col-price { width: 14%; text-align: right !important; padding-right: 4px !important; }
+        .col-amount { width: 16%; text-align: right !important; padding-right: 4px !important; font-weight: 600; color: var(--brand); }
+        .col-note { width: 14%; font-size: 7pt; color: var(--gray-600); }
+
+        /* 금액 요약 박스 - 표 오른쪽 하단 */
+        .amount-summary-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 6mm;
+        }
+
+        .amount-summary {
+            width: 60mm;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .summary-header {
+            background: var(--ok);
+            color: white;
+            padding: 4px 8px;
+            font-weight: 700;
+            font-size: 8pt;
+            text-align: center;
+        }
+
+        .summary-body {
+            padding: 6px 8px;
+            background: var(--gray-50);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-size: 8pt;
+            border-bottom: 1px dotted var(--gray-300);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            border-top: 2px solid var(--brand);
+            margin-top: 4px;
+            padding-top: 4px;
+            font-weight: 700;
+            font-size: 9pt;
+            color: var(--brand);
+        }
+
+        /* 하단 정보 - 입금계좌, 유의사항 좌우 배치 */
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6mm;
+            margin-bottom: 6mm;
+        }
+
+        .footer-card {
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .footer-header {
+            background: var(--gray-100);
+            padding: 4px 8px;
+            font-weight: 700;
+            font-size: 8pt;
+            color: var(--gray-700);
+        }
+
+        .footer-body {
+            padding: 6px 8px;
+            font-size: 7pt;
+            line-height: 1.4;
+        }
+
+        .bank-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .bank-name {
+            font-weight: 700;
+            color: var(--brand);
+            font-size: 8pt;
+        }
+
+        .account-number {
+            font-weight: 600;
+            font-size: 9pt;
+        }
+
+        .terms-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .terms-list li {
+            margin-bottom: 2px;
+            padding-left: 8px;
+            position: relative;
+        }
+
+        .terms-list li:before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--brand);
+        }
+
+        /* 서명/도장 영역 */
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-top: 4mm;
+            border-top: 1px solid var(--gray-300);
+        }
+
+        .signature-text {
+            font-size: 8pt;
+            color: var(--gray-600);
+            font-style: italic;
+        }
+
+        .signature-company {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-align: right;
+        }
+
+        .signature-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--brand), #1d4ed8);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 12pt;
+        }
+
+        .signature-details {
+            line-height: 1.2;
+        }
+
+        .signature-company-name {
+            font-size: 10pt;
+            font-weight: 700;
+            color: var(--brand);
+        }
+
+        .signature-ceo,
+        .signature-contact {
+            font-size: 7pt;
+            color: var(--gray-600);
+        }
+
+        .signature-seal {
+            margin-left: 8px;
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--brand);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8pt;
+            font-weight: 700;
+            color: var(--brand);
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .estimate-container {
+                width: 100%;
+                max-width: 100%;
+                padding: 4mm;
+                font-size: 8pt;
+            }
+
+            .estimate-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 4mm;
+            }
+
+            .parties-grid {
+                grid-template-columns: 1fr;
+                gap: 4mm;
+            }
+
+            .info-line {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+
+            .info-value {
+                text-align: left;
+            }
+
+            .estimate-table {
+                font-size: 7pt;
+            }
+
+            .estimate-table th,
+            .estimate-table td {
+                padding: 2px;
+                height: auto;
+            }
+
+            .amount-summary-container {
+                justify-content: center;
+            }
+
+            .amount-summary {
+                width: 100%;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 4mm;
+            }
+
+            .signature-area {
+                flex-direction: column;
+                text-align: center;
+                gap: 4mm;
+            }
+        }
+
+        /* 인쇄용 최적화 */
+        @media print {
+            body {
+                margin: 0;
+                background: white;
+            }
+
+            .estimate-container {
+                box-shadow: none;
+                border: none;
+                page-break-inside: avoid;
+            }
+
+            .supplier-header {
+                background: var(--brand) !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .client-header {
+                background: var(--brand2) !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .estimate-table th {
+                background: #000 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .summary-header {
+                background: var(--ok) !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .company-logo,
+            .signature-logo {
+                background: linear-gradient(135deg, var(--brand), #1d4ed8) !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="estimate-container estimate-improved">
+        <!-- 헤더: 로고, 상호, 제목, 견적정보 -->
+        <div class="estimate-header">
+            <div class="company-brand">
+                <div class="company-logo">${data.companyName.charAt(0)}</div>
+                <div>
+                    <div class="company-title">${data.companyName}</div>
+                    <div style="font-size: 7pt; color: var(--gray-600);">INTERIOR ESTIMATE</div>
+                </div>
+            </div>
+            <div class="document-info">
+                <div class="doc-title">견적서</div>
+                <div class="doc-meta">
+                    <div><strong>견적번호:</strong> ${data.estimateNumber}</div>
+                    <div><strong>작성일자:</strong> ${formatDate(data.estimateDate)}</div>
+                    <div><strong>유효기간:</strong> ${formatDate(data.validUntil)}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 공급자/공급받는자 정보 카드 -->
+        <div class="parties-grid">
+            <div class="party-card">
+                <div class="party-header supplier-header">공급자</div>
+                <div class="party-body">
+                    <div class="info-line">
+                        <span class="info-label">상호명</span>
+                        <span class="info-value highlight-supplier">${data.companyName}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">사업자번호</span>
+                        <span class="info-value">${data.businessNumber || '-'}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">대표자</span>
+                        <span class="info-value">${data.companyCeo || '-'}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">연락처</span>
+                        <span class="info-value">${data.companyPhone || '-'}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">주소</span>
+                        <span class="info-value">${data.companyAddress || '-'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="party-card">
+                <div class="party-header client-header">공급받는자</div>
+                <div class="party-body">
+                    <div class="info-line">
+                        <span class="info-label">${data.clientType === 'individual' ? '고객명' : '상호명'}</span>
+                        <span class="info-value highlight-client">${data.clientName}</span>
+                    </div>
+                    ${data.clientBusiness ? `
+                    <div class="info-line">
+                        <span class="info-label">사업자번호</span>
+                        <span class="info-value">${data.clientBusiness}</span>
+                    </div>
+                    ` : ''}
+                    ${data.clientCeo ? `
+                    <div class="info-line">
+                        <span class="info-label">대표자</span>
+                        <span class="info-value">${data.clientCeo}</span>
+                    </div>
+                    ` : ''}
+                    <div class="info-line">
+                        <span class="info-label">연락처</span>
+                        <span class="info-value">${data.clientContact || '-'}</span>
+                    </div>
+                    ${data.clientAddress ? `
+                    <div class="info-line">
+                        <span class="info-label">주소</span>
+                        <span class="info-value">${data.clientAddress}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+
+        <!-- 견적 내역 표 (최대 10행) -->
+        <div class="estimate-table-wrapper">
+            <div class="table-title">📋 견적 내역</div>
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th class="col-no">번호</th>
+                        <th class="col-item">품목명</th>
+                        <th class="col-spec">규격</th>
+                        <th class="col-qty">수량</th>
+                        <th class="col-unit">단위</th>
+                        <th class="col-price">단가</th>
+                        <th class="col-amount">공급가액</th>
+                        <th class="col-note">비고</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.itemsHtml}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 금액 요약 박스 -->
+        <div class="amount-summary-container">
+            <div class="amount-summary">
+                <div class="summary-header">💰 금액 요약</div>
+                <div class="summary-body">
+                    <div class="summary-row">
+                        <span>공급가액</span>
+                        <span>${data.subtotal}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>부가세(10%)</span>
+                        <span>${data.tax}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>총 합계</span>
+                        <span>${data.total}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단: 입금계좌, 유의사항 -->
+        <div class="footer-grid">
+            ${data.bankName ? `
+            <div class="footer-card">
+                <div class="footer-header">💳 입금 계좌</div>
+                <div class="footer-body">
+                    <div class="bank-info">
+                        <div class="bank-name">${data.bankName}</div>
+                        <div class="account-number">${data.accountNumber}</div>
+                        <div>예금주: ${data.accountHolder}</div>
+                    </div>
+                </div>
+            </div>
+            ` : '<div></div>'}
+            
+            <div class="footer-card">
+                <div class="footer-header">ℹ️ 유의사항</div>
+                <div class="footer-body">
+                    <ul class="terms-list">
+                        <li>상기 견적금액은 부가세 포함 금액입니다</li>
+                        <li>견적 유효기간: ${formatDate(data.validUntil)} 까지</li>
+                        <li>계약 체결 후 상세 일정은 별도 협의</li>
+                        <li>하자보수 기간: 준공 후 1년</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 서명/도장 영역 -->
+        <div class="signature-area">
+            <div class="signature-text">위와 같이 견적서를 제출합니다.</div>
+            <div class="signature-company">
+                <div class="signature-logo">${data.companyName.charAt(0)}</div>
+                <div class="signature-details">
+                    <div class="signature-company-name">${data.companyName}</div>
+                    <div class="signature-ceo">대표: ${data.companyCeo || ''}</div>
+                    <div class="signature-contact">${data.companyPhone ? `Tel. ${data.companyPhone}` : ''}</div>
+                </div>
+                <div class="signature-seal">인</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+    `;
 }
 
 // 견적서 데이터베이스 저장
@@ -1679,18 +2296,6 @@ function closePreview() {
 }
 
 // 인쇄
-function printDocument() {
-    const printContent = document.getElementById('preview-content').innerHTML;
-    const originalContent = document.body.innerHTML;
-    
-    document.body.innerHTML = printContent;
-    window.print();
-    document.body.innerHTML = originalContent;
-    
-    // 페이지 리로드하여 기능 복원
-    location.reload();
-}
-
 // 날짜 포맷팅
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -2092,27 +2697,21 @@ function collectDailyData() {
 
 // PDF 내보내기 - 견적서 (직접 생성)
 function exportEstimateToPDF() {
-    const companyName = document.getElementById('company-name').value;
-    const clientName = document.getElementById('client-name').value;
-    const estimateDate = document.getElementById('estimate-date').value;
+    // 미리보기가 이미 생성되어 있는지 확인
+    const previewElement = document.querySelector('.estimate-improved, .estimate-preview');
     
-    if (!companyName || !clientName || !estimateDate) {
-        alert('필수 정보를 모두 입력해주세요.');
+    if (!previewElement) {
+        alert('미리보기가 생성되지 않았습니다. 먼저 견적서를 생성해주세요.');
         return;
     }
     
-    // 견적서 생성 후 PDF로 변환
-    generateEstimate();
-    
-    // 잠시 후 PDF 생성
-    setTimeout(() => {
-        downloadCurrentAsPDF();
-    }, 500);
+    // 직접 PDF 다운로드
+    downloadCurrentAsPDF();
 }
 
 // 현재 미리보기를 PDF로 다운로드
 function downloadCurrentAsPDF() {
-    const element = document.querySelector('.estimate-preview, .daily-preview');
+    const element = document.querySelector('.estimate-improved, .estimate-preview, .daily-preview');
     
     if (!element) {
         alert('미리보기가 생성되지 않았습니다. 먼저 견적서를 생성해주세요.');
@@ -2158,13 +2757,30 @@ function downloadCurrentAsPDF() {
             heightLeft -= (pdfHeight - 20);
         }
         
-        // 파일명 생성
-        const clientName = document.getElementById('client-name').value || '고객';
+        // 파일명 생성 - 날짜_고객명_견적서 형식
+        const clientType = document.getElementById('client-type').value;
+        let clientName;
+        if (clientType === 'individual') {
+            clientName = document.getElementById('individual-name').value || '고객';
+        } else {
+            clientName = document.getElementById('client-name').value || '고객';
+        }
+        
         const estimateDate = document.getElementById('estimate-date').value || new Date().toISOString().split('T')[0];
         const dailyDate = document.getElementById('daily-date').value || new Date().toISOString().split('T')[0];
-        const fileName = element.classList.contains('estimate-preview') 
-            ? `${estimateDate}_${clientName}_인테리어견적서.pdf`
-            : `${dailyDate}_시공명세서.pdf`;
+        
+        // 날짜 포맷팅 (YYYY-MM-DD -> YYYYMMDD)
+        const formatDateForFilename = (dateStr) => {
+            return dateStr.replace(/-/g, '');
+        };
+        
+        // 클래스 이름으로 문서 타입 판별
+        let fileName;
+        if (element.classList.contains('daily-preview')) {
+            fileName = `${formatDateForFilename(dailyDate)}_${clientName}_시공명세서.pdf`;
+        } else {
+            fileName = `${formatDateForFilename(estimateDate)}_${clientName}_견적서.pdf`;
+        }
         
         // PDF 저장
         pdf.save(fileName);

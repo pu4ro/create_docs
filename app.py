@@ -38,6 +38,40 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# API 응답 표준화 함수
+def success_response(data=None, message="성공", status_code=200):
+    """표준화된 성공 응답"""
+    response = {
+        "success": True,
+        "message": message,
+        "data": data
+    }
+    return jsonify(response), status_code
+
+def error_response(message="오류가 발생했습니다", status_code=400, error_code=None):
+    """표준화된 에러 응답"""
+    response = {
+        "success": False,
+        "message": message,
+        "error_code": error_code
+    }
+    logger.error(f"API Error: {message} (Code: {error_code})")
+    return jsonify(response), status_code
+
+# 전역 에러 핸들러
+@app.errorhandler(404)
+def not_found(error):
+    return error_response("페이지를 찾을 수 없습니다", 404, "NOT_FOUND")
+
+@app.errorhandler(500)
+def internal_error(error):
+    return error_response("서버 내부 오류가 발생했습니다", 500, "INTERNAL_ERROR")
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.exception("Unhandled exception occurred")
+    return error_response("예기치 않은 오류가 발생했습니다", 500, "UNEXPECTED_ERROR")
+
 # 데이터베이스 초기화
 def init_db():
     conn = sqlite3.connect('estimate.db')
@@ -458,39 +492,78 @@ def delete_bank_account(account_id):
 # 데이터베이스 API 엔드포인트들
 @app.route('/api/companies', methods=['GET', 'POST'])
 def companies():
-    conn = sqlite3.connect('estimate.db')
-    
     if request.method == 'POST':
-        data = request.json
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO companies (name, business_number, address, ceo, type, item, phone, fax, manager)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            data.get('name'), data.get('business_number'), data.get('address'),
-            data.get('ceo'), data.get('type'), data.get('item'),
-            data.get('phone'), data.get('fax'), data.get('manager')
-        ))
-        conn.commit()
-        company_id = cursor.lastrowid
-        conn.close()
-        return jsonify({'id': company_id, 'message': '회사 정보가 저장되었습니다.'})
+        try:
+            data = request.json
+            if not data or not data.get('name'):
+                return error_response("회사명이 필요합니다", 400, "MISSING_COMPANY_NAME")
+            
+            conn = sqlite3.connect('estimate.db')
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO companies (name, business_number, address, ceo, type, item, phone, fax, manager)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                data.get('name'), data.get('business_number'), data.get('address'),
+                data.get('ceo'), data.get('type'), data.get('item'),
+                data.get('phone'), data.get('fax'), data.get('manager')
+            ))
+            conn.commit()
+            company_id = cursor.lastrowid
+            conn.close()
+            logger.info(f"회사 정보 생성 성공: ID {company_id}")
+            return success_response({'id': company_id}, '회사 정보가 저장되었습니다', 201)
+        except Exception as e:
+            logger.exception("회사 정보 생성 실패")
+            return error_response("회사 정보 저장 중 오류가 발생했습니다", 500, "DB_ERROR")
     
     else:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM companies ORDER BY created_at DESC')
-        companies = cursor.fetchall()
-        conn.close()
-        return jsonify(companies)
+        try:
+            conn = sqlite3.connect('estimate.db')
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM companies ORDER BY created_at DESC')
+            companies = cursor.fetchall()
+            conn.close()
+            
+            columns = ['id', 'name', 'business_number', 'address', 'ceo', 'type', 'item', 'phone', 'fax', 'manager', 'created_at']
+            result = [dict(zip(columns, company)) for company in companies]
+            logger.info(f"회사 정보 조회 성공: {len(result)}건")
+            return success_response(result, "회사 정보 조회 성공")
+        except Exception as e:
+            logger.exception("회사 정보 조회 실패")
+            return error_response("회사 정보 조회 중 오류가 발생했습니다", 500, "DB_ERROR")
 
 @app.route('/api/companies/<int:company_id>', methods=['DELETE'])
 def delete_company(company_id):
-    conn = sqlite3.connect('estimate.db')
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM companies WHERE id = ?', (company_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': '회사 정보가 삭제되었습니다.'})
+    try:
+        conn = sqlite3.connect('estimate.db')
+        cursor = conn.cursor()
+        
+        # 먼저 해당 회사가 존재하는지 확인
+        cursor.execute('SELECT COUNT(*) FROM companies WHERE id = ?', (company_id,))
+        if cursor.fetchone()[0] == 0:
+            conn.close()
+            return error_response("해당 회사를 찾을 수 없습니다", 404, "COMPANY_NOT_FOUND")
+        
+        # 해당 회사와 연결된 견적서가 있는지 확인
+        cursor.execute('SELECT COUNT(*) FROM estimates WHERE company_id = ?', (company_id,))
+        estimate_count = cursor.fetchone()[0]
+        
+        if estimate_count > 0:
+            conn.close()
+            return error_response(f"이 회사와 연결된 견적서 {estimate_count}건이 있어 삭제할 수 없습니다. 먼저 견적서를 삭제해주세요.", 400, "COMPANY_HAS_ESTIMATES")
+        
+        # 회사 삭제 실행
+        cursor.execute('DELETE FROM companies WHERE id = ?', (company_id,))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"회사 정보 삭제 성공: ID {company_id}")
+        return success_response(None, '회사 정보가 삭제되었습니다')
+        
+    except Exception as e:
+        logger.exception(f"회사 정보 삭제 실패: ID {company_id}")
+        return error_response("회사 정보 삭제 중 오류가 발생했습니다", 500, "DB_ERROR")
 
 # 고객 정보 API
 @app.route('/api/clients', methods=['GET', 'POST'])
