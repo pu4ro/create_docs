@@ -1439,6 +1439,7 @@ function generateEstimate() {
     const subtotal = document.getElementById('subtotal').textContent;
     const tax = document.getElementById('tax').textContent;
     const total = document.getElementById('total').textContent;
+    const includeTax = document.getElementById('include-tax').checked;
     
     // 진행상황 완료 표시
     const steps = document.querySelectorAll('.step');
@@ -1455,11 +1456,11 @@ function generateEstimate() {
         companyName, businessNumber, companyAddress, companyCeo, companyType, companyItem,
         companyPhone, companyFax, companyManager, clientType, clientName, clientBusiness,
         clientAddress, clientCeo, clientContact, clientManager, estimateNumber, estimateDate,
-        validUntil, bankName, accountNumber, accountHolder, subtotal, tax, total, itemsHtml
+        validUntil, bankName, accountNumber, accountHolder, subtotal, tax, total, itemsHtml, includeTax
     });
     
     // 견적서를 데이터베이스에 저장
-    saveEstimateToDB(companyName, clientName, estimateNumber, estimateDate, validUntil, subtotal, tax, total, itemsHtml);
+    saveEstimateToDB(companyName, clientName, estimateNumber, estimateDate, validUntil, subtotal, tax, total, itemsHtml, includeTax);
     
     showPreview(previewHtml);
 }
@@ -2093,10 +2094,12 @@ function generateImprovedEstimateHTML(data) {
                         <span>공급가액</span>
                         <span>${data.subtotal}</span>
                     </div>
+                    ${data.includeTax ? `
                     <div class="summary-row">
                         <span>부가세(10%)</span>
                         <span>${data.tax}</span>
                     </div>
+                    ` : ''}
                     <div class="summary-row">
                         <span>총 합계</span>
                         <span>${data.total}</span>
@@ -2416,6 +2419,7 @@ function collectEstimateData() {
     const subtotalText = document.getElementById('subtotal').textContent.replace('원', '').replace(/,/g, '');
     const taxText = document.getElementById('tax').textContent.replace('원', '').replace(/,/g, '');
     const totalText = document.getElementById('total').textContent.replace('원', '').replace(/,/g, '');
+    const includeTax = document.getElementById('include-tax').checked;
     
     return {
         estimate_number: document.getElementById('estimate-number').value,
@@ -2426,7 +2430,8 @@ function collectEstimateData() {
         items: items,
         subtotal: parseFloat(subtotalText) || 0,
         tax: parseFloat(taxText) || 0,
-        total: parseFloat(totalText) || 0
+        total: parseFloat(totalText) || 0,
+        includeTax: includeTax
     };
 }
 
@@ -3591,4 +3596,92 @@ function initKeyboardNavigation() {
             }
         }
     });
+}
+
+// 부가세 계산 및 총합 계산 함수
+function calculateTotal() {
+    const rows = document.querySelectorAll('#estimate-items tbody tr');
+    const includeTax = document.getElementById('include-tax').checked;
+    const taxSection = document.getElementById('tax-section');
+    let subtotalAmount = 0;
+    
+    // 각 행의 총액 계산 및 합계 산출
+    rows.forEach(row => {
+        const quantityInput = row.querySelector('.item-quantity');
+        const priceInput = row.querySelector('.item-price');
+        const totalCell = row.querySelector('.item-total');
+        
+        if (quantityInput && priceInput && totalCell) {
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const total = quantity * price;
+            
+            totalCell.textContent = formatNumber(total) + '원';
+            subtotalAmount += total;
+        }
+    });
+    
+    // 부가세 계산
+    const taxAmount = includeTax ? subtotalAmount * 0.1 : 0;
+    const totalAmount = subtotalAmount + taxAmount;
+    
+    // UI 업데이트
+    document.getElementById('subtotal').textContent = formatNumber(subtotalAmount) + '원';
+    document.getElementById('tax').textContent = formatNumber(taxAmount) + '원';
+    document.getElementById('total').textContent = formatNumber(totalAmount) + '원';
+    
+    // 부가세 섹션 표시/숨김
+    if (includeTax) {
+        taxSection.classList.remove('hidden');
+    } else {
+        taxSection.classList.add('hidden');
+    }
+}
+
+// 페이지 로드 시 이벤트 리스너 설정
+document.addEventListener('DOMContentLoaded', function() {
+    // 기존 초기화 함수들 실행
+    if (typeof initProgressTracking === 'function') {
+        initProgressTracking();
+    }
+    if (typeof initKeyboardNavigation === 'function') {
+        initKeyboardNavigation();
+    }
+    
+    // 견적 항목 테이블 이벤트 리스너
+    const itemsTable = document.getElementById('estimate-items');
+    if (itemsTable) {
+        itemsTable.addEventListener('input', function(e) {
+            if (e.target.classList.contains('item-quantity') || e.target.classList.contains('item-price')) {
+                calculateTotal();
+            }
+        });
+    }
+    
+    // 부가세 체크박스 이벤트 리스너
+    const includeTaxCheckbox = document.getElementById('include-tax');
+    if (includeTaxCheckbox) {
+        includeTaxCheckbox.addEventListener('change', calculateTotal);
+    }
+    
+    // 초기 계산 실행
+    calculateTotal();
+});
+
+// 행 추가 시에도 계산이 되도록 기존 addEstimateRow 함수 수정
+const originalAddEstimateRow = window.addEstimateRow;
+if (originalAddEstimateRow) {
+    window.addEstimateRow = function() {
+        originalAddEstimateRow();
+        setTimeout(calculateTotal, 100); // 약간의 지연 후 계산
+    };
+}
+
+// 행 삭제 시에도 계산이 되도록 기존 deleteRow 함수 수정  
+const originalDeleteRow = window.deleteRow;
+if (originalDeleteRow) {
+    window.deleteRow = function(btn) {
+        originalDeleteRow(btn);
+        setTimeout(calculateTotal, 100); // 약간의 지연 후 계산
+    };
 }

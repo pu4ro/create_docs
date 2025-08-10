@@ -321,11 +321,18 @@
                     </div>
 
                     <div class="total-section">
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="include-tax" checked onchange="calculateTotal()">
+                                <span class="checkmark"></span>
+                                부가가치세 포함
+                            </label>
+                        </div>
                         <div class="form-group">
                             <label>공급가액:</label>
                             <span id="subtotal">0원</span>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="tax-section">
                             <label>부가가치세(10%):</label>
                             <span id="tax">0원</span>
                         </div>
